@@ -1,6 +1,11 @@
-import { Guild } from "discord.js";
+import {
+	CommandInteraction,
+	CommandInteractionOption,
+	Guild,
+	GuildChannel,
+} from "discord.js";
 import { ChannelTypes } from "discord.js/typings/enums";
-import { SlashCommand } from "slashasaurus";
+import { SlashCommand, ValidationError } from "slashasaurus";
 
 export default new SlashCommand(
 	{
@@ -41,6 +46,25 @@ export default new SlashCommand(
 				description: "The channel to announce the winners in",
 				channelTypes: [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS],
 				required: true,
+				validator: (
+					interaction: CommandInteraction,
+					value: NonNullable<CommandInteractionOption["channel"]>
+				) => {
+					const guild = interaction.guild!;
+					const channel = guild.channels.cache.get(value.id) as GuildChannel;
+					if (!channel) {
+						throw new ValidationError(`Could not find channel <#${value.id}>`);
+					}
+					const hasPerms = channel
+						.permissionsFor(guild.me!)!
+						.has(["SEND_MESSAGES", "VIEW_CHANNEL"]);
+					if (!hasPerms) {
+						throw new ValidationError(
+							`I don't have permission to send messages in <#${value.id}>`
+						);
+					}
+					return true;
+				},
 			},
 			{
 				type: "ATTACHMENT",
@@ -78,15 +102,8 @@ export default new SlashCommand(
 				});
 				return;
 			}
-			if (!guild.me?.permissionsIn(options.channel.id).has("SEND_MESSAGES")) {
-				interaction.reply({
-					content: `I don't have permission to send messages in that channel`,
-					ephemeral: true,
-				});
-				return;
-			}
 			const now = Date.now();
-			guild.scheduledEvents.create({
+			await guild.scheduledEvents.create({
 				name: options.name,
 				description:
 					options.description +
