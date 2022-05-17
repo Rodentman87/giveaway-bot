@@ -1,5 +1,7 @@
+To run the bot, rename `example.env` to `.env` and input your bot's token. Then run `yarn` and `yarn start:dev`.
+
 This app was generated with create-slashasaurus-app. All the dependencies have
-been installed, to run the app, run: 
+been installed, to run the app, run:
 
 ```sh
 npm run build

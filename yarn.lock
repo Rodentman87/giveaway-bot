@@ -143,10 +143,10 @@ node-fetch@^2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
-slashasaurus@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/slashasaurus/-/slashasaurus-0.8.0.tgz#579d24eff85301d11e7e3cfe315b69e3f62f3dd3"
-  integrity sha512-9aAJAJEt3GH2AwrsqwAj+hPucsG9omJl5HuZfey3N3gjnVkLSRKbAnoIzaZZwnQ4dVkJBQJTl5CiLlC8zTjVNg==
+slashasaurus@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/slashasaurus/-/slashasaurus-0.8.1.tgz#a16d204803ba0e2af73c7e8147f31744aaa9d1c9"
+  integrity sha512-OdQldankBiQGWw7TxyOb0RCkMv2Ae1/a+68hPC0ae2M1bQeyNdLslz9M9aPjJsePNxiptD94xSxT3K8CVRyuag==
 
 tr46@~0.0.3:
   version "0.0.3"
