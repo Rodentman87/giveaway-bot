@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Intents } from "discord.js";
 import path from "path";
 import { SlashasaurusClient } from "slashasaurus";
+import { shuffle } from "./shuffle";
 
 const client = new SlashasaurusClient(
 	{
@@ -30,9 +31,7 @@ client.on("guildScheduledEventUpdate", async (oldEvent, newEvent) => {
 			// Get the users who are interested
 			const users = await newEvent.fetchSubscribers();
 			// Pick the winners
-			const winningUsers = [...users.values()]
-				.sort(() => Math.random() - 0.5)
-				.slice(0, winners);
+			const winningUsers = shuffle([...users.values()]).slice(0, winners);
 			// Get the channel
 			const channelId = newEvent.description!.match(/<#(\d+)>/)![1];
 			const channel = await newEvent.guild?.channels.fetch(channelId);
@@ -48,7 +47,7 @@ client.on("guildScheduledEventUpdate", async (oldEvent, newEvent) => {
 			}
 			// Send the message
 			await channel.send({
-				content: `${newEvent.name} has ended!
+				content: `${newEvent.name} (${newEvent.id}) has ended!
 
 Winner${winners > 1 ? "s" : ""}:
 ${winningUsers.map((user) => `- <@${user.user.id}>`).join("\n")}`,
