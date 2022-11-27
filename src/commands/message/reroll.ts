@@ -1,10 +1,11 @@
-import { Message } from "discord.js";
+import { Message, PermissionFlagsBits } from "discord.js";
 import { MessageCommand } from "slashasaurus";
 import { shuffle } from "../../shuffle";
 
 export default new MessageCommand(
 	{
 		name: "reroll",
+		defaultMemberPermissions: PermissionFlagsBits.ManageEvents,
 	},
 	async (interaction, client) => {
 		if (
@@ -29,14 +30,14 @@ export default new MessageCommand(
 		const event = await interaction.guild!.scheduledEvents.fetch(id);
 
 		// Get the total number of winners
-		const winners = parseInt(event.entityMetadata.location!.split(" ")[0]);
+		const winners = parseInt(event.entityMetadata!.location!.split(" ")[0]);
 		// Get the users who are interested
 		const users = await event.fetchSubscribers();
 		// Pick the winners
 		const winningUsers = shuffle([...users.values()]).slice(0, winners);
 
 		// Edit the message
-		await (interaction.targetMessage as Message).edit({
+		return await (interaction.targetMessage as Message).edit({
 			content: `${event.name} (${event.id}) has ended!
 
 Winner${winners > 1 ? "s" : ""}:

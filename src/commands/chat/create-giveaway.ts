@@ -3,19 +3,25 @@ import {
 	CommandInteractionOption,
 	Guild,
 	GuildChannel,
+	GuildScheduledEventEntityType,
+	GuildScheduledEventPrivacyLevel,
+	PermissionFlagsBits,
 } from "discord.js";
-import { ChannelTypes } from "discord.js/typings/enums";
 import { SlashCommand, ValidationError } from "slashasaurus";
+import { ChannelType } from "discord-api-types/v10";
 
 export default new SlashCommand(
 	{
 		name: "create-giveaway",
 		description: "Creates a new giveaway",
+		defaultMemberPermissions: PermissionFlagsBits.ManageEvents,
 		options: [
 			{
 				type: "STRING",
 				name: "name",
 				description: "The name of the giveaway",
+				minLength: 3,
+				maxLength: 100,
 				required: true,
 			},
 			{
@@ -44,7 +50,7 @@ export default new SlashCommand(
 				type: "CHANNEL",
 				name: "channel",
 				description: "The channel to announce the winners in",
-				channelTypes: [ChannelTypes.GUILD_TEXT, ChannelTypes.GUILD_NEWS],
+				channelTypes: [ChannelType.GuildText, ChannelType.GuildNews],
 				required: true,
 				validator: (
 					interaction: CommandInteraction,
@@ -56,8 +62,11 @@ export default new SlashCommand(
 						throw new ValidationError(`Could not find channel <#${value.id}>`);
 					}
 					const hasPerms = channel
-						.permissionsFor(guild.me!)!
-						.has(["SEND_MESSAGES", "VIEW_CHANNEL"]);
+						.permissionsFor(guild.members.me!)
+						.has([
+							PermissionFlagsBits.SendMessages,
+							PermissionFlagsBits.ViewChannel,
+						]);
 					if (!hasPerms) {
 						throw new ValidationError(
 							`I don't have permission to send messages in <#${value.id}>`
@@ -71,11 +80,6 @@ export default new SlashCommand(
 				name: "image",
 				description: "The image of the giveaway",
 			},
-			{
-				type: "BOOLEAN",
-				name: "anonymous",
-				description: "Whether the giveaway creator should be listed",
-			},
 		] as const,
 	},
 	{
@@ -87,6 +91,7 @@ export default new SlashCommand(
 				});
 				return;
 			}
+			await interaction.deferReply({ ephemeral: true });
 			let guild: Guild | undefined;
 			if (interaction.inRawGuild()) {
 				// Get the guild from the raw guild
@@ -111,10 +116,9 @@ export default new SlashCommand(
 
 ---
 Winners will be announced in <#${options.channel.id}>
-Click "Interested" to enter` +
-					(options.anonymous ? "" : ` - Created by ${interaction.user.tag}`),
-				privacyLevel: "GUILD_ONLY",
-				entityType: "EXTERNAL",
+Click "Interested" to enter - Created by ${interaction.user.tag}`,
+				privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+				entityType: GuildScheduledEventEntityType.External,
 				entityMetadata: {
 					location:
 						options.winners > 1 ? `${options.winners} winners` : "1 winner",
@@ -123,9 +127,8 @@ Click "Interested" to enter` +
 				scheduledEndTime: now + (options.duration + 1) * 60 * 60 * 1000,
 				image: options.image ? options.image.url : undefined,
 			});
-			interaction.reply({
+			interaction.editReply({
 				content: `Created giveaway`,
-				ephemeral: true,
 			});
 		},
 	}
