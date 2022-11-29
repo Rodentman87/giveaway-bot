@@ -32,7 +32,17 @@ export default new MessageCommand(
 		// Get the total number of winners
 		const winners = parseInt(event.entityMetadata!.location!.split(" ")[0]);
 		// Get the users who are interested
-		const users = await event.fetchSubscribers();
+		const users: string[] = [];
+		let nextGroup = await event.fetchSubscribers({
+			limit: 100,
+		});
+		while (nextGroup.size > 0) {
+			users.push(...nextGroup.map((u) => u.user.id).values());
+			nextGroup = await event.fetchSubscribers({
+				limit: 100,
+				after: nextGroup.lastKey()!,
+			});
+		}
 		// Pick the winners
 		const winningUsers = shuffle([...users.values()]).slice(0, winners);
 
@@ -41,7 +51,7 @@ export default new MessageCommand(
 			content: `${event.name} (${event.id}) has ended!
 
 Winner${winners > 1 ? "s" : ""}:
-${winningUsers.map((user) => `- <@${user.user.id}>`).join("\n")}`,
+${winningUsers.map((id) => `- <@${id}>`).join("\n")}`,
 		});
 	}
 );

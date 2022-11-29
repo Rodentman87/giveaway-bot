@@ -1,9 +1,9 @@
-import "dotenv/config";
 import {
 	GatewayIntentBits,
 	GuildScheduledEventStatus,
 	PermissionFlagsBits,
 } from "discord.js";
+import "dotenv/config";
 import path from "path";
 import { SlashasaurusClient } from "slashasaurus";
 import { shuffle } from "./shuffle";
@@ -35,9 +35,19 @@ client.on("guildScheduledEventUpdate", async (oldEvent, newEvent) => {
 				newEvent.entityMetadata!.location!.split(" ")[0]
 			);
 			// Get the users who are interested
-			const users = await newEvent.fetchSubscribers();
+			const users: string[] = [];
+			let nextGroup = await newEvent.fetchSubscribers({
+				limit: 100,
+			});
+			while (nextGroup.size > 0) {
+				users.push(...nextGroup.map((u) => u.user.id).values());
+				nextGroup = await newEvent.fetchSubscribers({
+					limit: 100,
+					after: nextGroup.lastKey()!,
+				});
+			}
 			// Pick the winners
-			const winningUsers = shuffle([...users.values()]).slice(0, winners);
+			const winningUsers = shuffle(users).slice(0, winners);
 			// Get the channel
 			const channelId = newEvent.description!.match(/<#(\d+)>/)![1];
 			const channel = await newEvent.guild?.channels.fetch(channelId);
@@ -58,7 +68,7 @@ client.on("guildScheduledEventUpdate", async (oldEvent, newEvent) => {
 				content: `${newEvent.name} (${newEvent.id}) has ended!
 
 Winner${winners > 1 ? "s" : ""}:
-${winningUsers.map((user) => `- <@${user.user.id}>`).join("\n")}`,
+${winningUsers.map((id) => `- <@${id}>`).join("\n")}`,
 			});
 			newEvent.edit({
 				status: GuildScheduledEventStatus.Completed,
